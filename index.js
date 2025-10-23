@@ -4,7 +4,7 @@ const fetch = require("node-fetch");
 
 const SHEETDB_URL = "https://sheetdb.io/api/v1/39er5p9lp054d";
 const ALLOWED_CHANNEL = "1430443661946126378";
-const PORT = 3000; // The local port where webhook will listen
+const PORT = pprocess.env.PORT || 3000; // The local port where webhook will listen
 
 // Create a new Discord client
 const client = new Client({
@@ -115,5 +115,6 @@ client.on("messageCreate", async (message) => {
 
 // Login bot
 client.login(process.env.DISCORD_TOKEN);
+
 
 
