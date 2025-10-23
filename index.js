@@ -114,4 +114,5 @@ client.on("messageCreate", async (message) => {
 });
 
 // Login bot
-client.login("MTQzMDgzODk5ODA2NjEzOTE3OQ.GVzafL.VT8bEFCZof9ln0dd8AsQLgy8rDK8UY8gkkLo7s");
+client.login("MTQzMDgzODk5ODA2NjEzOTE3OQ.GQEa4b.GmL2hFvj6C0J8dT5VgV2ekJ3qbW6sP7js1yDHM");
+
