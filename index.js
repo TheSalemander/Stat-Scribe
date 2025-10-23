@@ -114,5 +114,6 @@ client.on("messageCreate", async (message) => {
 });
 
 // Login bot
-client.login("MTQzMDgzODk5ODA2NjEzOTE3OQ.GQEa4b.GmL2hFvj6C0J8dT5VgV2ekJ3qbW6sP7js1yDHM");
+client.login(process.env.DISCORD_TOKEN);
+
 
