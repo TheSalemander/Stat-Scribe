@@ -53,6 +53,7 @@ client.on("ready", () => {
 
 // Discord: message commands
 client.on("messageCreate", async (message) => {
+    console.log("Received message:", message.content, "in channel:", message.channel.id);
     if (message.author.bot) return;
     if (message.channel.id !== ALLOWED_CHANNEL) return;
 
@@ -115,6 +116,7 @@ client.on("messageCreate", async (message) => {
 
 // Login bot
 client.login(process.env.DISCORD_TOKEN);
+
 
 
 
