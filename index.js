@@ -66,6 +66,13 @@ client.on("ready", () => {
 // Commands
 // ==============================
 client.on("messageCreate", async (message) => {
+
+// Auto-delete non-commands in this channel
+if (message.channel.id === ALLOWED_CHANNEL && !message.content.startsWith("!")) {
+  return message.delete().catch(() => {});
+}
+
+  
   // Log *all* messages for debugging (you'll still return early below)
   console.log("Received message:", message.content, "in channel:", message.channel.id);
 
@@ -214,3 +221,4 @@ client.on("messageCreate", async (message) => {
 // Login
 // ==============================
 client.login(process.env.DISCORD_TOKEN);
+
