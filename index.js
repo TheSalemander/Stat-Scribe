@@ -67,10 +67,22 @@ client.on("ready", () => {
 // ==============================
 client.on("messageCreate", async (message) => {
 
-// Auto-delete non-commands in this channel
-if (message.channel.id === ALLOWED_CHANNEL && !message.content.startsWith("!")) {
-  return message.delete().catch(() => {});
-}
+  if (message.author.bot) return;
+
+  // Auto-delete non-commands
+  if (message.channel.id === ALLOWED_CHANNEL && !message.content.startsWith("!")) {
+    return message.delete().catch(() => {});
+  }
+
+  if (message.channel.id !== ALLOWED_CHANNEL) return;
+
+  console.log(`[QM] MSG from ${message.author.tag}:`, message.content);
+
+  const parts = message.content.trim().split(/\s+/);
+  const cmd = (parts.shift() || "").toLowerCase();
+  const args = parts;
+  const norm = (s) => (s || "").trim().toLowerCase();
+
 
   
   // Log *all* messages for debugging (you'll still return early below)
@@ -221,4 +233,5 @@ if (message.channel.id === ALLOWED_CHANNEL && !message.content.startsWith("!")) 
 // Login
 // ==============================
 client.login(process.env.DISCORD_TOKEN);
+
 
