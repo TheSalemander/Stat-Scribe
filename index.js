@@ -114,23 +114,17 @@ client.on("interactionCreate", async interaction => {
 });
 
 // ==============================
-// Auto-delete non-commands
-// ==============================
-client.on("messageCreate", (message) => {
-  if (message.author.bot) return;
-  if (message.channel.id === ALLOWED_CHANNEL && !message.content.startsWith("/")) {
-    message.delete().catch(() => {});
-  }
-});
-
-// ==============================
 // Webhook (for auto-standings updates)
 // ==============================
 const app = express();
 app.use(express.json());
 app.listen(PORT, () => console.log(`Webhook listening on ${PORT}`));
 
-// ==============================
-// Login
-// ==============================
+// Auto-delete non-bot text messages in the allowed channel
+client.on("messageCreate", msg => {
+  if (msg.channel.id !== ALLOWED_CHANNEL) return;
+  if (msg.author.bot) return;
+  msg.delete().catch(() => {});
+});
+
 client.login(process.env.DISCORD_TOKEN);
