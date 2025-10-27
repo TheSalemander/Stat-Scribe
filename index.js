@@ -7,12 +7,25 @@ const express = require("express");
 const fetch = require("node-fetch");
 
 // ==============================
-// Config
+// Config (now using .env)
 // ==============================
-const SHEETDB_URL = "https://sheetdb.io/api/v1/39er5p9lp054d";
-const MATCHES_SHEET = "matches_games";
-const ALLOWED_CHANNEL = "1430443661946126378";
+require("dotenv").config();
+
+const SHEETDB_URL = process.env.SHEETDB_URL;
+const MATCHES_SHEET = process.env.MATCHES_SHEET || "matches_games";
+const ALLOWED_CHANNEL = process.env.ALLOWED_CHANNEL;
 const PORT = process.env.PORT || 3000;
+
+if (!process.env.DISCORD_TOKEN) {
+  console.error("❌ ERROR: DISCORD_TOKEN missing in .env or Railway Variables");
+  process.exit(1);
+}
+
+if (!SHEETDB_URL) {
+  console.error("❌ ERROR: SHEETDB_URL missing in .env or Railway Variables");
+  process.exit(1);
+}
+
 
 const client = new Client({
   intents: [
