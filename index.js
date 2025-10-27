@@ -107,11 +107,22 @@ client.commands.set("remaining", {
 // ==============================
 // Interaction Listener
 // ==============================
+
 client.on("interactionCreate", async interaction => {
   if (!interaction.isChatInputCommand()) return;
+
+  // ✅ Restrict all slash commands to the stats channel
+  if (interaction.channelId !== ALLOWED_CHANNEL) {
+    return interaction.reply({
+      content: `📊 Please use Stat-Scribe commands in the <#${ALLOWED_CHANNEL}> channel.`,
+      ephemeral: true
+    });
+  }
+
   const cmd = client.commands.get(interaction.commandName);
   if (cmd) return cmd.run(interaction);
 });
+
 
 // ==============================
 // Webhook (for auto-standings updates)
