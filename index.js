@@ -6,7 +6,7 @@ const { Client, GatewayIntentBits, Routes, Collection } = require("discord.js");
 const express = require("express");
 const fetch = require("node-fetch");
 const fs = require("fs");
-const { createCanvas } = require("canvas");
+const { createCanvas, registerFont } = require("canvas"); // ✅ fixed: added registerFont here
 registerFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", { family: "DejaVu" });
 
 // ==============================
