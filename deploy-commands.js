@@ -33,6 +33,33 @@ const commands = [
       }
     ]
   }
+
+{
+  name: "streaks",
+  description: "Show current win or losing streaks",
+  options: [
+    {
+      name: "type",
+      description: "Type of streak (win or lose)",
+      type: 3, // STRING
+      required: true,
+      choices: [
+        { name: "Win", value: "win" },
+        { name: "Lose", value: "lose" }
+      ]
+    }
+  ]
+},
+{
+  name: "pvp",
+  description: "Check head-to-head record between two players",
+  options: [
+    { name: "player1", description: "First player", type: 3, required: true },
+    { name: "player2", description: "Second player", type: 3, required: true }
+  ]
+}
+
+
 ];
 
 const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);

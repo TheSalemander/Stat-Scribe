@@ -78,6 +78,72 @@ client.commands.set("stats", {
   }
 });
 
+client.commands.set("streaks", {
+  run: async (interaction) => {
+    const type = interaction.options.getString("type"); // 'win' or 'lose'
+    const matchesRes = await fetch(`${SHEETDB_URL}?sheet=${MATCHES_SHEET}`);
+    const rows = await matchesRes.json();
+
+    const streaks = {};
+    const players = new Set(rows.flatMap(m => [m.Winner, m.Loser]));
+
+    // Initialize
+    players.forEach(p => streaks[p] = { win: 0, lose: 0 });
+
+    // Track streaks in order of matches
+    rows.forEach(m => {
+      const winner = m.Winner?.trim();
+      const loser = m.Loser?.trim();
+      if (!winner || !loser) return;
+
+      // Reset the loser's win streak, increment their loss streak
+      streaks[winner].win = (streaks[winner].win || 0) + 1;
+      streaks[winner].lose = 0;
+
+      streaks[loser].lose = (streaks[loser].lose || 0) + 1;
+      streaks[loser].win = 0;
+    });
+
+    const max = Math.max(...[...players].map(p => streaks[p][type]));
+    const leaders = [...players].filter(p => streaks[p][type] === max && max > 0);
+
+    if (leaders.length === 0)
+      return interaction.reply(`No active ${type} streaks found.`);
+
+    const streakEmoji = type === "win" ? "🔥" : "💀";
+    const streakLabel = type === "win" ? "Win" : "Losing";
+
+    let reply = `${streakEmoji} **Current ${streakLabel} Streak${leaders.length > 1 ? "s" : ""}** (${max} match${max > 1 ? "es" : ""})\n`;
+    reply += leaders.map(p => `• ${p}`).join("\n");
+
+    return interaction.reply(reply);
+  }
+});
+
+client.commands.set("pvp", {
+  run: async (interaction) => {
+    const player1 = interaction.options.getString("player1");
+    const player2 = interaction.options.getString("player2");
+
+    if (!player1 || !player2)
+      return interaction.reply("Please provide two player names.");
+
+    const response = await fetch(`${SHEETDB_URL}?sheet=PvP_Matrix`);
+    const matrix = await response.json();
+
+    const row = matrix.find(r => r["Player"]?.toLowerCase() === player1.toLowerCase());
+    const value = row ? row[player2] : null;
+
+    if (!value)
+      return interaction.reply(`No PvP data found for ${player1} vs ${player2}.`);
+
+    return interaction.reply(`🎯 **${player1} vs ${player2}:** ${value}`);
+  }
+});
+
+
+
+
 client.commands.set("remaining", {
   run: async (interaction) => {
     const playerName = interaction.options.getString("player");
