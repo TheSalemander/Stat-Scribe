@@ -5,6 +5,8 @@
 const { Client, GatewayIntentBits, Routes, Collection } = require("discord.js");
 const express = require("express");
 const fetch = require("node-fetch");
+const fs = require("fs");
+const { createCanvas } = require("canvas");
 
 // ==============================
 // Config (now using .env)
@@ -26,7 +28,6 @@ if (!SHEETDB_URL) {
   process.exit(1);
 }
 
-
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -40,6 +41,7 @@ client.commands = new Collection();
 // ==============================
 // Slash Command Handlers
 // ==============================
+
 client.commands.set("standings", {
   run: async (interaction) => {
     const response = await fetch(SHEETDB_URL);
@@ -87,16 +89,13 @@ client.commands.set("streaks", {
     const streaks = {};
     const players = new Set(rows.flatMap(m => [m.Winner, m.Loser]));
 
-    // Initialize
     players.forEach(p => streaks[p] = { win: 0, lose: 0 });
 
-    // Track streaks in order of matches
     rows.forEach(m => {
       const winner = m.Winner?.trim();
       const loser = m.Loser?.trim();
       if (!winner || !loser) return;
 
-      // Reset the loser's win streak, increment their loss streak
       streaks[winner].win = (streaks[winner].win || 0) + 1;
       streaks[winner].lose = 0;
 
@@ -128,11 +127,9 @@ client.commands.set("pvp", {
     if (!player1 || !player2)
       return interaction.reply("Please provide two player names.");
 
-    // Fetch match history
     const response = await fetch(`${SHEETDB_URL}?sheet=matches_games`);
     const matches = await response.json();
 
-    // Filter all matches between player1 and player2
     const relevant = matches.filter(
       m =>
         (m.P1?.toLowerCase() === player1.toLowerCase() && m.P2?.toLowerCase() === player2.toLowerCase()) ||
@@ -142,7 +139,6 @@ client.commands.set("pvp", {
     if (relevant.length === 0)
       return interaction.reply(`No PvP data found for ${player1} vs ${player2}.`);
 
-    // Calculate wins
     let p1Wins = 0;
     let p2Wins = 0;
 
@@ -165,9 +161,93 @@ client.commands.set("pvp", {
   }
 });
 
+// ==============================
+// 🆕 PvP Matrix (Heatmap View)
+// ==============================
 
+client.commands.set("pvp-matrix", {
+  run: async (interaction) => {
+    await interaction.deferReply();
 
+    const response = await fetch(`${SHEETDB_URL}?sheet=PvP_Matrix`);
+    const matrix = await response.json();
 
+    if (!matrix || matrix.length === 0)
+      return interaction.editReply("No PvP Matrix data found.");
+
+    const headers = Object.keys(matrix[0]);
+    const rows = matrix.map(r => headers.map(h => r[h] || "-"));
+
+    const cellW = 110;
+    const cellH = 40;
+    const width = cellW * (headers.length + 1);
+    const height = cellH * (rows.length + 1);
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext("2d");
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, width, height);
+    ctx.font = "bold 16px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    const getHeatColor = (pct) => {
+      if (pct === "-") return "#f8f8f8";
+      const value = parseInt(pct);
+      if (isNaN(value)) return "#f8f8f8";
+      const g = Math.round(255 * (value / 100));
+      const r = Math.round(255 * (1 - value / 100));
+      return `rgb(${r},${g},100)`;
+    };
+
+    headers.forEach((h, i) => {
+      ctx.fillStyle = "#ff4d4d";
+      ctx.fillRect((i + 1) * cellW, 0, cellW, cellH);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(h, (i + 1.5) * cellW, cellH / 2);
+    });
+
+    rows.forEach((_, i) => {
+      ctx.fillStyle = "#00cc44";
+      ctx.fillRect(0, (i + 1) * cellH, cellW, cellH);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(headers[i], cellW / 2, (i + 1.5) * cellH);
+    });
+
+    rows.forEach((row, y) => {
+      row.forEach((cell, x) => {
+        if (x === y) {
+          ctx.fillStyle = "#cccccc";
+          ctx.fillRect((x + 1) * cellW, (y + 1) * cellH, cellW, cellH);
+        } else {
+          const pctMatch = cell.match(/\((\d+)%\)/);
+          const pct = pctMatch ? pctMatch[1] : "-";
+          ctx.fillStyle = getHeatColor(pct);
+          ctx.fillRect((x + 1) * cellW, (y + 1) * cellH, cellW, cellH);
+        }
+
+        ctx.strokeStyle = "#00000020";
+        ctx.strokeRect((x + 1) * cellW, (y + 1) * cellH, cellW, cellH);
+
+        ctx.fillStyle = "#000000";
+        ctx.font = "14px Arial";
+        ctx.fillText(cell, (x + 1.5) * cellW, (y + 1.5) * cellH);
+      });
+    });
+
+    const filePath = "/tmp/pvp_matrix.png";
+    fs.writeFileSync(filePath, canvas.toBuffer("image/png"));
+
+    await interaction.editReply({
+      content: "📊 **Current PvP Matrix (Heatmap View)**",
+      files: [filePath],
+    });
+  },
+});
+
+// ==============================
+// Remaining Matches Command
+// ==============================
 
 client.commands.set("remaining", {
   run: async (interaction) => {
@@ -215,7 +295,6 @@ client.commands.set("remaining", {
 client.on("interactionCreate", async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
-  // ✅ Restrict all slash commands to the stats channel
   if (interaction.channelId !== ALLOWED_CHANNEL) {
     return interaction.reply({
       content: `📊 Please use Stat-Scribe commands in the <#${ALLOWED_CHANNEL}> channel.`,
@@ -227,15 +306,13 @@ client.on("interactionCreate", async interaction => {
   if (cmd) return cmd.run(interaction);
 });
 
-
 // ==============================
-// Webhook (for auto-standings updates)
+// Webhook + Message Cleanup
 // ==============================
 const app = express();
 app.use(express.json());
 app.listen(PORT, () => console.log(`Webhook listening on ${PORT}`));
 
-// Auto-delete non-bot text messages in the allowed channel
 client.on("messageCreate", msg => {
   if (msg.channel.id !== ALLOWED_CHANNEL) return;
   if (msg.author.bot) return;
