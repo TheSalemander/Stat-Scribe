@@ -120,7 +120,7 @@ client.commands.set("streaks", {
   }
 });
 
-cclient.commands.set("pvp", {
+client.commands.set("pvp", {
   run: async (interaction) => {
     const player1 = interaction.options.getString("player1");
     const player2 = interaction.options.getString("player2");
