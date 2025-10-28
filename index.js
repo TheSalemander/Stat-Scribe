@@ -120,7 +120,7 @@ client.commands.set("streaks", {
   }
 });
 
-client.commands.set("pvp", {
+cclient.commands.set("pvp", {
   run: async (interaction) => {
     const player1 = interaction.options.getString("player1");
     const player2 = interaction.options.getString("player2");
@@ -128,18 +128,43 @@ client.commands.set("pvp", {
     if (!player1 || !player2)
       return interaction.reply("Please provide two player names.");
 
-    const response = await fetch(`${SHEETDB_URL}?sheet=PvP_Matrix`);
-    const matrix = await response.json();
+    // Fetch match history
+    const response = await fetch(`${SHEETDB_URL}?sheet=matches_games`);
+    const matches = await response.json();
 
-    const row = matrix.find(r => r["Player"]?.toLowerCase() === player1.toLowerCase());
-    const value = row ? row[player2] : null;
+    // Filter all matches between player1 and player2
+    const relevant = matches.filter(
+      m =>
+        (m.P1?.toLowerCase() === player1.toLowerCase() && m.P2?.toLowerCase() === player2.toLowerCase()) ||
+        (m.P1?.toLowerCase() === player2.toLowerCase() && m.P2?.toLowerCase() === player1.toLowerCase())
+    );
 
-    if (!value)
+    if (relevant.length === 0)
       return interaction.reply(`No PvP data found for ${player1} vs ${player2}.`);
 
-    return interaction.reply(`🎯 **${player1} vs ${player2}:** ${value}`);
+    // Calculate wins
+    let p1Wins = 0;
+    let p2Wins = 0;
+
+    for (const match of relevant) {
+      if (match.Winner?.toLowerCase() === player1.toLowerCase()) p1Wins++;
+      if (match.Winner?.toLowerCase() === player2.toLowerCase()) p2Wins++;
+    }
+
+    const total = p1Wins + p2Wins;
+    const p1Pct = total > 0 ? Math.round((p1Wins / total) * 100) : 0;
+    const p2Pct = total > 0 ? Math.round((p2Wins / total) * 100) : 0;
+
+    const msg =
+      `🎯 **${player1} vs ${player2}**\n` +
+      `• ${player1}: ${p1Wins} wins (${p1Pct}%)\n` +
+      `• ${player2}: ${p2Wins} wins (${p2Pct}%)\n` +
+      `• Total matches: ${total}`;
+
+    return interaction.reply(msg);
   }
 });
+
 
 
 
