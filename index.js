@@ -7,6 +7,7 @@ const express = require("express");
 const fetch = require("node-fetch");
 const fs = require("fs");
 const { createCanvas } = require("canvas");
+registerFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", { family: "DejaVu" });
 
 // ==============================
 // Config (now using .env)
@@ -200,7 +201,7 @@ client.commands.set("pvp-matrix", {
     // Background
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, width, height);
-    ctx.font = "bold 16px Arial";
+    ctx.font = "bold 16px DejaVu";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
@@ -246,7 +247,7 @@ client.commands.set("pvp-matrix", {
         ctx.strokeRect((x + 1) * cellW, (y + 1) * cellH, cellW, cellH);
 
         ctx.fillStyle = "#000000";
-        ctx.font = "14px Arial";
+        ctx.font = "14px DejaVu";
         ctx.fillText(cell, (x + 1.5) * cellW, (y + 1.5) * cellH);
       });
     });
