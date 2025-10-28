@@ -1,8 +1,8 @@
 const { REST, Routes } = require("discord.js");
 require("dotenv").config();
 
-const GUILD_ID = "YOUR_DISCORD_SERVER_ID_HERE";
-const CLIENT_ID = "YOUR_BOT_APPLICATION_ID_HERE";
+const GUILD_ID = "1430443251147472969";
+const CLIENT_ID = "1430838998066139179";
 
 const commands = [
   {
