@@ -161,9 +161,6 @@ client.commands.set("pvp", {
   }
 });
 
-const { createCanvas } = require("canvas");
-const fs = require("fs");
-const fetch = require("node-fetch");
 
 
 client.commands.set("pvp-matrix", {
