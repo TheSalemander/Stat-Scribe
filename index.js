@@ -7,15 +7,15 @@ const express = require("express");
 const fetch = require("node-fetch");
 const fs = require("fs");
 const { createCanvas, registerFont } = require("canvas");
-const fs = require("fs");
 
 // ✅ Try to register a system font only if it exists
 try {
-  if (fs.existsSync("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")) {
-    registerFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", { family: "DejaVu" });
-    console.log("✅ Using DejaVuSans system font");
+  const fontPath = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf";
+  if (fs.existsSync(fontPath)) {
+    registerFont(fontPath, { family: "DejaVu" });
+    console.log("✅ Using system font: DejaVuSans");
   } else {
-    console.warn("⚠️ System font not found, using Canvas default font");
+    console.warn("⚠️ System font not found — using Canvas default font");
   }
 } catch (err) {
   console.warn("⚠️ Font registration failed:", err.message);
