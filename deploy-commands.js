@@ -32,7 +32,7 @@ const commands = [
         required: true
       }
     ]
-  }
+  },
 
 {
   name: "streaks",
