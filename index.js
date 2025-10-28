@@ -161,9 +161,10 @@ client.commands.set("pvp", {
   }
 });
 
-import { createCanvas } from "canvas";
-import fs from "fs";
-import fetch from "node-fetch";
+const { createCanvas } = require("canvas");
+const fs = require("fs");
+const fetch = require("node-fetch");
+
 
 client.commands.set("pvp-matrix", {
   run: async (interaction) => {
