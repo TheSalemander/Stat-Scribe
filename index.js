@@ -161,23 +161,37 @@ client.commands.set("pvp", {
   }
 });
 
-// ==============================
-// 🆕 PvP Matrix (Heatmap View)
-// ==============================
+import { createCanvas } from "canvas";
+import fs from "fs";
+import fetch from "node-fetch";
 
 client.commands.set("pvp-matrix", {
   run: async (interaction) => {
     await interaction.deferReply();
 
-    const response = await fetch(`${SHEETDB_URL}?sheet=PvP_Matrix`);
-    const matrix = await response.json();
+    // Fetch PvP matrix data
+    const response = await fetch(`${process.env.SHEETDB_URL}?sheet=PvP_Matrix`);
+    const matrixRaw = await response.json();
 
-    if (!matrix || matrix.length === 0)
-      return interaction.editReply("No PvP Matrix data found.");
+    // ✅ Clean the data: remove empty rows and cells
+    const matrix = matrixRaw
+      .filter(r => Object.values(r).some(v => v && v.toString().trim() !== ""))
+      .map(row => {
+        const cleaned = {};
+        for (const [key, value] of Object.entries(row)) {
+          if (key && key.trim() !== "") cleaned[key.trim()] = (value || "").trim();
+        }
+        return cleaned;
+      });
 
-    const headers = Object.keys(matrix[0]);
+    if (!matrix.length)
+      return interaction.editReply("No PvP Matrix data found or the sheet is empty.");
+
+    // ✅ Extract player names (headers)
+    const headers = Object.keys(matrix[0]).filter(h => h && h.trim() !== "");
     const rows = matrix.map(r => headers.map(h => r[h] || "-"));
 
+    // --- Canvas setup ---
     const cellW = 110;
     const cellH = 40;
     const width = cellW * (headers.length + 1);
@@ -185,21 +199,24 @@ client.commands.set("pvp-matrix", {
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext("2d");
 
+    // Background
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, width, height);
     ctx.font = "bold 16px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
+    // --- Heat color helper ---
     const getHeatColor = (pct) => {
-      if (pct === "-") return "#f8f8f8";
+      if (pct === "-" || pct === "" || pct == null) return "#f8f8f8";
       const value = parseInt(pct);
       if (isNaN(value)) return "#f8f8f8";
       const g = Math.round(255 * (value / 100));
       const r = Math.round(255 * (1 - value / 100));
-      return `rgb(${r},${g},100)`;
+      return `rgb(${r},${g},100)`; // Red → Green gradient
     };
 
+    // --- Header row ---
     headers.forEach((h, i) => {
       ctx.fillStyle = "#ff4d4d";
       ctx.fillRect((i + 1) * cellW, 0, cellW, cellH);
@@ -207,25 +224,26 @@ client.commands.set("pvp-matrix", {
       ctx.fillText(h, (i + 1.5) * cellW, cellH / 2);
     });
 
-    rows.forEach((_, i) => {
+    // --- Left column ---
+    headers.forEach((h, i) => {
       ctx.fillStyle = "#00cc44";
       ctx.fillRect(0, (i + 1) * cellH, cellW, cellH);
       ctx.fillStyle = "#ffffff";
-      ctx.fillText(headers[i], cellW / 2, (i + 1.5) * cellH);
+      ctx.fillText(h, cellW / 2, (i + 1.5) * cellH);
     });
 
+    // --- Matrix cells ---
     rows.forEach((row, y) => {
       row.forEach((cell, x) => {
         if (x === y) {
           ctx.fillStyle = "#cccccc";
-          ctx.fillRect((x + 1) * cellW, (y + 1) * cellH, cellW, cellH);
         } else {
           const pctMatch = cell.match(/\((\d+)%\)/);
           const pct = pctMatch ? pctMatch[1] : "-";
           ctx.fillStyle = getHeatColor(pct);
-          ctx.fillRect((x + 1) * cellW, (y + 1) * cellH, cellW, cellH);
         }
 
+        ctx.fillRect((x + 1) * cellW, (y + 1) * cellH, cellW, cellH);
         ctx.strokeStyle = "#00000020";
         ctx.strokeRect((x + 1) * cellW, (y + 1) * cellH, cellW, cellH);
 
@@ -235,6 +253,7 @@ client.commands.set("pvp-matrix", {
       });
     });
 
+    // --- Save and send ---
     const filePath = "/tmp/pvp_matrix.png";
     fs.writeFileSync(filePath, canvas.toBuffer("image/png"));
 
