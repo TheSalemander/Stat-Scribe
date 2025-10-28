@@ -5,23 +5,26 @@
 const { Client, GatewayIntentBits, Routes, Collection } = require("discord.js");
 const express = require("express");
 const fetch = require("node-fetch");
-const fs = require("fs");
 const { createCanvas, registerFont } = require("canvas");
+const fs = require("fs");
 
-// ✅ Try to register a system font only if it exists
+// ✅ Try bundled font first, fallback to system font, then Canvas default
 try {
-  const fontPath = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf";
-  if (fs.existsSync(fontPath)) {
-    registerFont(fontPath, { family: "DejaVu" });
-    console.log("✅ Using system font: DejaVuSans");
+  const bundledFont = "./assets/fonts/NotoSans-Regular.ttf";
+  const systemFont = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf";
+
+  if (fs.existsSync(bundledFont)) {
+    registerFont(bundledFont, { family: "StatScribeFont" });
+    console.log("✅ Registered bundled font: NotoSans-Regular");
+  } else if (fs.existsSync(systemFont)) {
+    registerFont(systemFont, { family: "StatScribeFont" });
+    console.log("✅ Registered system font: DejaVuSans");
   } else {
-    console.warn("⚠️ System font not found — using Canvas default font");
+    console.warn("⚠️ No custom fonts found — using Canvas default font");
   }
 } catch (err) {
   console.warn("⚠️ Font registration failed:", err.message);
 }
-
-
 
 // ==============================
 // Config (now using .env)
@@ -215,7 +218,7 @@ client.commands.set("pvp-matrix", {
     // Background
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, width, height);
-    ctx.font = "bold 16px DejaVu";
+    ctx.font = "bold 16px StatScribeFont";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
@@ -261,7 +264,7 @@ client.commands.set("pvp-matrix", {
         ctx.strokeRect((x + 1) * cellW, (y + 1) * cellH, cellW, cellH);
 
         ctx.fillStyle = "#000000";
-        ctx.font = "14px DejaVu";
+        ctx.font = "14px StatScribeFont";
         ctx.fillText(cell, (x + 1.5) * cellW, (y + 1.5) * cellH);
       });
     });
